@@ -1,4 +1,4 @@
-// init project
+// init project:ue4 database rest
 // server.js
 // where your node app starts
 
@@ -7,9 +7,7 @@ const path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
-
 var Gun = require('gun');
-
 var helmet = require('helmet');
 
 require('dotenv').config();
@@ -28,9 +26,7 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
-
 app.use(Gun.serve);
-
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
 
@@ -40,6 +36,10 @@ app.use(express.static('public'));
   //response.render('index');
 //});
 
+//=========================================================
+// Init Server Host
+//=========================================================
+
 // listen for requests :)
 var listener = app.listen(PORT, function () {
   console.log('Your app is listening on port ' + listener.address().port);
@@ -47,19 +47,19 @@ var listener = app.listen(PORT, function () {
   //console.log(listener.address());
 });
 
-
+//=========================================================
+// Socket.IO
+//=========================================================
 var io = require('socket.io')(listener);
-
+//=========================================================
+// GunDB
+//=========================================================
 var bdatabase = process.env.BDatabase || false;
-
 var gunconfig = {
   web:listener//server express
 }
-
 var dbFile = './data.json';
-
 gunconfig.file=process.env.DatabaseFile || './data.json';
-
 if(bdatabase =='true'){
   gunconfig.localStorage = false;
   gunconfig.radisk = false;
@@ -92,6 +92,7 @@ var gun = Gun({
 });
 
 var gun = Gun(gunconfig);
+//console.log(gun);
 
 gun.on('hi', peer => {//peer connect
   //console.log('connect peer to',peer);
@@ -103,6 +104,9 @@ gun.on('bye', (peer)=>{// peer disconnect
   console.log('disconnected from peer!');
 });
 
+gun.get('random/8t5Uu3qy6').put({hello: "world"});
+
+
 //assign locals variable for gun
 app.use(function (req, res, next) {
   res.locals.gun = gun;
@@ -110,8 +114,16 @@ app.use(function (req, res, next) {
   //res.locals.authenticated = !req.user.anonymous
   next()
 })
+//=========================================================
+// UE4 get and post
+//=========================================================
 
-//socket io
+var ue4 = require('./src/server/ue4api');
+app.use('/ue4', ue4);
+
+//=========================================================
+// Socket IO set up
+//=========================================================
 io.on('connection', function(socket){
   console.log('a user connected socket.io');
   socket.on('chat message', (data) => {

@@ -174,19 +174,30 @@ function serve(done){
     }
     server.start();
     //use gulp.watch to trigger server actions(notify, start or stop)
-    gulp.watch(['./public/bundle.js'], function (file) {
+    //gulp.watch(['./public/bundle.js'], function (file) {
         //console.log("files change???");
-        if (server != null){
-            server.notify.apply(server, [file]);
-            server.start.bind(server)();
-        }
-        browserSync.reload();
-        file();
-    });
+        //if (server != null){
+            //server.notify.apply(server, [file]);
+            //server.start.bind(server)();
+        //}
+        //browserSync.reload();
+        //file();
+    //});
 
     //use gulp.watch to trigger server actions(notify, start or stop)
-    gulp.watch(['public/**/*.*'], function (file) {
+    //gulp.watch(['public/**/*.*'], function (file) {
         //console.log("files change?");
+        //if (server != null){
+            //server.notify.apply(server, [file]);
+            //server.start.bind(server)();
+        //}
+        //browserSync.reload();
+        //file();
+    //});
+
+    //use gulp.watch to trigger server actions(notify, start or stop)
+    gulp.watch(['./src/**/*.*'], function (file) {
+        console.log("files change?");
         if (server != null){
             server.notify.apply(server, [file]);
             server.start.bind(server)();
@@ -204,8 +215,8 @@ function serve(done){
 }
 
 function watch(done) {
-    gulp.watch(['./main.js','./src/server/**/*.*'], backend_build);
-    gulp.watch(['./src/client/**/*.*'], frontend_build);
+    gulp.watch(['./server.js','./src/server/**/*.*'], backend_build);
+    gulp.watch(['./src/**/*.*'], frontend_build);
     return done();
 }
 

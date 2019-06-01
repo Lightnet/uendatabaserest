@@ -52,15 +52,17 @@
 	function handle_logincheck(event){
 		console.log(event.detail.text);
 		if(event.detail.text == 'login'){
-			blogin = true;
+			//blogin = true;
 		}
 	}
 </script>
 
 <style>
+	/*
 	h1 {
 		color: purple;
 	}
+	*/
 </style>
 
 <div>App {name}!</div>
