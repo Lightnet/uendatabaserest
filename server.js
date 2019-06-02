@@ -1,17 +1,25 @@
+//===============================================
 // init project:ue4 database rest
 // server.js
 // where your node app starts
+//===============================================
 
-const path = require('path');
+
+//const path = require('path');
 
 var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var Gun = require('gun');
+require('gun/lib/then.js');
+require('gun/lib/not.js');
 var helmet = require('helmet');
+//===============================================
 
 require('dotenv').config();
 var PORT = process.env.PORT || 8080;
+//var PORT = process.env.PORT || 80;
+console.log("PORT:" + PORT );
 
 app.use(helmet());
 app.use(helmet.noCache());
@@ -106,7 +114,6 @@ gun.on('bye', (peer)=>{// peer disconnect
 
 gun.get('random/8t5Uu3qy6').put({hello: "world"});
 
-
 //assign locals variable for gun
 app.use(function (req, res, next) {
   res.locals.gun = gun;
@@ -125,15 +132,15 @@ app.use('/ue4', ue4);
 // Socket IO set up
 //=========================================================
 io.on('connection', function(socket){
-  console.log('a user connected socket.io');
-  socket.on('chat message', (data) => {
-    console.log('msg',data)
-    io.emit('chat message', data);
-    botcmds.parsemessage(socket,data,(_txt)=>{
-      io.emit('chat message', _txt);
-    });
-  })
-  socket.on('disconnect', () => {
-    console.log('user disconnected')
-  })
+	console.log('a user connected socket.io');
+  	socket.on('chat message', (data) => {
+    	console.log('msg',data)
+    	io.emit('chat message', data);
+    	botcmds.parsemessage(socket,data,(_txt)=>{
+      		io.emit('chat message', _txt);
+    	});
+  	})
+  	socket.on('disconnect', () => {
+    	console.log('user disconnected')
+  	})
 });

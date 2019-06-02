@@ -4,8 +4,9 @@
 
     const dispatch = createEventDispatcher();
 
-    let input_username = "test";
-    let input_password = "testa";
+    let input_username = "ts";
+    let input_password = "ts";
+
 
     async function getLoginAsync(data) {
         //let response = await fetch(`http://localhost:8080/ue4/login?username=${input_username}`);
@@ -24,6 +25,7 @@
     }
 
     async function getRegisterAsync(data) {
+        
         let rawResponse = await fetch('http://localhost:8080/ue4/register', {
             method: 'post',
             headers: {
@@ -37,21 +39,34 @@
 
     function action_login(){
         dispatch('message', {text: 'login'});
+        if (input_username === "" || input_password === ""){
+            console.log("none string");
+            return;
+        }
+
         getLoginAsync({
             username:input_username,
             password:input_password
         });
+
+    }
+
+    function action_cancel(){
+        console.log("cancel");
     }
 
     function action_register(){
         //dispatch('message', {text: 'login'});
+        if (input_username === "" || input_password === ""){
+            console.log("none string");
+            return;
+        }
+
         getRegisterAsync({
             username:input_username,
             password:input_password
         });
         //console.log("register");
-
-        
     }
 
 </script>
@@ -60,18 +75,22 @@
 
 <section>
     <div>
-        <label>User Name</label>
-        <input />
+        <label>Login Access</label>
     </div>
 
     <div>
-        <label>Password</label>
-        <input />
+        <label> User Name :</label>
+        <input bind:value={input_username} />
+    </div>
+
+    <div>
+        <label> Password :</label>
+        <input bind:value={input_password} />
     </div>
 
     <div>
         <button on:click={action_login}>Login</button>
-        <button>Cancel</button>
+        <button on:click={action_cancel}>Cancel</button>
         <button on:click={action_register}>Register</button>
     </div>
 </section>

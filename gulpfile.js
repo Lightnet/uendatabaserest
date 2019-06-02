@@ -1,19 +1,27 @@
 const path = require('path');
-const fs = require('fs');
+//const fs = require('fs');
 var gulp = require('gulp');
+var clean = require('gulp-clean');
 
 var webpack = require('webpack');
 const webpackStream = require('webpack-stream');
 const nodeExternals = require('webpack-node-externals');
-var gls = require('gulp-live-server');
+//var rollup = require('gulp-better-rollup')
+var nodemon = require('gulp-nodemon');
+
+//var gls = require('gulp-live-server');
 var browserSync = require('browser-sync').create();
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-var server = null;
+//var server = gls.new('./backend.js');
+
+//var server = gls.new('./backend.js', {env: {NODE_ENV: 'development'},livereload:false});
 
 const mode = process.env.NODE_ENV || 'development';
 const dev = mode === 'development';
 const prod = mode === 'production';
+
+//const timeout = ms => new Promise(res => setTimeout(res, ms));
 
 const commonModulejs = {
     rules: [
@@ -61,9 +69,9 @@ const commonModulejs = {
             use: {
                 loader: 'svelte-loader',
                 options: {
-                    dev,
-                    hydratable: true,
-                    hotReload: false
+                    //dev,
+                    //hydratable: true,
+                    //hotReload: false
                 }
             }
         },
@@ -124,12 +132,11 @@ var frontWebpackConfig = {
             //'process.env.NODE_ENV': '"production"'
             'process.env.NODE_ENV': JSON.stringify(dev)
         }),
-        
         new MiniCssExtractPlugin({
 			filename: '[name].css'
 		})
     ].filter(Boolean),
-    devtool: prod ? false: 'source-map'
+    //devtool: prod ? false: 'source-map'
     
 };
 
@@ -155,68 +162,123 @@ var backWebpackConfig = {
     externals: [nodeExternals()],
 }
 
-function frontend_build(){
+async function frontend_build(){
+    //await timeout(5000);
     return gulp.src(['./src/main.js'])
-        .pipe(webpackStream(frontWebpackConfig), webpack)
+        .pipe(webpackStream(frontWebpackConfig))
+        //.pipe(webpackStream(frontWebpackConfig), webpack)
         .pipe(gulp.dest('./public/'));
 }
 
+
+//var svelte = require('rollup-plugin-svelte');
+//var resolve = require('rollup-plugin-node-resolve');
+//var rp_commonjs = require('rollup-plugin-commonjs');
+
+//function frontend_build(){
+    //return gulp.src(['./src/main.js'])
+        //.pipe(rollup({
+            //output: {
+                //sourcemap: true,
+                //format: 'iife',
+                //name: 'app',
+                //file: 'public/bundle.js'
+            //},
+            //plugins: [
+                //svelte({
+                    // enable run-time checks when not in production
+                    //dev: !prod,
+                    // we'll extract any component CSS out into
+                    // a separate file — better for performance
+                    //css: css => {
+                        //css.write('public/bundle.css');
+                    //}
+                    //skipIntroByDefault: true,
+                    //nestedTransitions: true
+                //}),
+                //resolve(),
+		        //rp_commonjs(),
+            //]
+        //}))
+    //.pipe(gulp.dest('./public/'));
+//}
+
 function backend_build(){
     return gulp.src('./server.js')
+        //.pipe(webpackStream(backWebpackConfig))
         .pipe(webpackStream(backWebpackConfig), webpack)
         .pipe(gulp.dest('./'));
 }
 
-function serve(done){
-    //var server = gls.new('main.js');
-    if (server == null){
-        server = gls.new('./backend.js');
-    }
-    server.start();
-    //use gulp.watch to trigger server actions(notify, start or stop)
-    //gulp.watch(['./public/bundle.js'], function (file) {
-        //console.log("files change???");
-        //if (server != null){
-            //server.notify.apply(server, [file]);
-            //server.start.bind(server)();
-        //}
-        //browserSync.reload();
-        //file();
-    //});
+async function cleanbundle(done){
+    return gulp.src(['public/bundle.js','public/bundle.js.map'], {read: false, allowEmpty:true})
+        .pipe(clean());
+    //await timeout(5000);
+    //return done();
+}
 
-    //use gulp.watch to trigger server actions(notify, start or stop)
-    //gulp.watch(['public/**/*.*'], function (file) {
-        //console.log("files change?");
-        //if (server != null){
-            //server.notify.apply(server, [file]);
-            //server.start.bind(server)();
-        //}
-        //browserSync.reload();
-        //file();
-    //});
 
-    //use gulp.watch to trigger server actions(notify, start or stop)
-    gulp.watch(['./src/**/*.*'], function (file) {
-        console.log("files change?");
-        if (server != null){
-            server.notify.apply(server, [file]);
-            server.start.bind(server)();
-        }
-        browserSync.reload();
-        file();
-    });
-    // Note: try wrapping in a function if getting an error like `TypeError: Bad argument at TypeError (native) at ChildProcess.spawn`
-    gulp.watch('./backend.js', function(donew) {
-        server.start.bind(server)();
-        donew();
-    });
+var started = false;
 
-    return done();
+function serve(cb){
+    //return gulp.pipe(server.start());
+    //server.start()
+    //return done();
+
+    return nodemon({
+		script: 'backend.js'
+	}).on('start', function () {
+		// to avoid nodemon being started multiple times
+		// thanks @matthisk
+		if (!started) {
+			cb();
+			started = true; 
+		} 
+	});
+}
+
+function reload(cb){
+    //return gulp.pipe(server.start.bind(server)())
+        //.pipe(browserSync.reload());
+    //await timeout(1000)
+    console.log("reload...");
+    //server.start.bind(server)();
+    //await timeout(2000);
+    //browserSync.reload();
+    //await timeout(2000);
+    //return cb();
+    //var started = false;
+	
+	return nodemon({
+		script: 'backend.js'
+	}).on('start', function () {
+		// to avoid nodemon being started multiple times
+		// thanks @matthisk
+		if (!started) {
+			cb();
+			started = true; 
+		} 
+	});
+
 }
 
 function watch(done) {
-    gulp.watch(['./server.js','./src/server/**/*.*'], backend_build);
-    gulp.watch(['./src/**/*.*'], frontend_build);
+    gulp.watch(['./server.js','./src/server/**/*.*'], gulp.series(backend_build));
+    //gulp.watch(['./src/**/*.*'], gulp.series( cleanbundle, frontend_build));
+
+    //use gulp.watch to trigger server actions(notify, start or stop)
+    //gulp.watch(['./public/bundle.js'], (donesub)=> {
+        //console.log("bundle change?");
+        //server.start.bind(server)();
+        //browserSync.reload();
+        //donesub();
+    //});
+
+    // Note: try wrapping in a function if getting an error like `TypeError: Bad argument at TypeError (native) at ChildProcess.spawn`
+    //gulp.watch('./backend.js', (donew)=> {
+        //server.start.bind(server)();
+        //donew();
+    //});
     return done();
 }
 
@@ -230,14 +292,19 @@ function browser_sync(done){
     return done();
 }
 
+exports.cleanbundle = cleanbundle;
 exports.frontend_build = frontend_build;
 exports.backend_build = backend_build;
 exports.serve = serve;
+exports.reload = reload;
+
 exports.watch = watch;
 exports.browser_sync = browser_sync;
 
 const build = gulp.series(frontend_build, backend_build, watch, serve, browser_sync);
-//const build = gulp.series( backend_build, watch, serve, browser_sync);
+
+const buildserver = gulp.series( backend_build, watch, serve);
+exports.buildserver = buildserver;
 
 /*
  * Export a default task

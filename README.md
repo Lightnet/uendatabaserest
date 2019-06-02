@@ -3,6 +3,10 @@
 # Information: 
  Simple Feeds database and account system access.
 
+# Run Dev:
+ * gulp buildserver (server side)
+ * npm dev (client side)
+
 
 # Note:
  * Rollup build has smaller file.
