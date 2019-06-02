@@ -14,7 +14,6 @@ const crypto = require('crypto');
 const util = require('util');
 
 
-
 //https://ciphertrick.com/salt-hash-passwords-using-nodejs-crypto/
 
 /**
@@ -81,6 +80,23 @@ router.post('/login',function(req,res){
         console.log("gun found!");
         console.log(username + ' : ' + password);
         //sha256('abc').then(hash => console.log(hash));
+        let gun = res.locals.gun;
+
+        gun.get('user/'+username).val(function(data, key){
+            if(data !=null){
+                console.log(data.salt);
+                let passwordData = sha512(password, data.salt);
+
+                if(data.passwordhash == passwordData.passwordHash){
+                    console.log("match password");
+
+                }else{
+                    console.log("fail password");
+                }
+            }else{
+                console.log("Data Fail!");
+            }
+        });
     }
 
     //console.log(res.locals.gun);
@@ -90,101 +106,63 @@ router.post('/login',function(req,res){
     res.json({'message' : 'ue4 Successfull'});
 });
 
-
-
-/*
-function promiseTimeout(ms, promise){
-    let cleared = false;
-
-    // Create a promise that rejects in <ms> milliseconds
-    let timeout = new Promise((resolve, reject) => {
-      let id = setTimeout(() => {
-        clearTimeout(id);
-        console.log("time out!!!");
-        reject('Timed out in '+ ms + 'ms.')
-        //reject('false')
-      }, ms)
-    })
-
-    promise
-    .then(function(res){
-        // If already cleared, the response is too late, we must not do anything
-        if (! cleared) {
-            clearTimeout(timer);
-            resolve(res);
-        }    
-    })
-    .catch(function(err){
-        if (! cleared) {
-            clearTimeout(timer);
-            reject(err);
-        }    
-    });
-  
-    // Returns a race between our timeout and the passed in promise
-    return Promise.race([
-      promise,
-      timeout
-    ])
-}
-*/
-
-/*
-export const promiseTimeout = function(ms, promise){
-
-    // Create a promise that rejects in <ms> milliseconds
-    let timeout = new Promise((resolve, reject) => {
-      let id = setTimeout(() => {
-        clearTimeout(id);
-        reject('Timed out in '+ ms + 'ms.')
-      }, ms)
-    })
-  
-    // Returns a race between our timeout and the passed in promise
-    return Promise.race([
-      promise,
-      timeout
-    ])
-}
-*/
-
-function doSomething(){
-    return new Promise((resolve, reject) => {
-      /* ...  */
-    })
-}
-
 async function checkuserexist(gun,userdata){
     let lusers = gun.get('users');
-    let bfound = false;
-
-    //let userdatas = await lusers.map().once().then();
     //console.log(userdatas);
     //console.log(lusers.map().once())
-    
     let p1 = new Promise((resolve, reject) => {
-        console.log('List: ')
+        //console.log('List: ')
         lusers.map().once(function(data, key){
             //console.log("Item:", data);
             //console.log("key:", key);
-            console.log('data.username: '+data.username)
+            //console.log('data.username: '+data.username)
             if(data.username == userdata.username){
-                console.log("found! user");
+                //console.log("found! user");
                 resolve('true'); // fulfilled
                 return;
             }
         });
     });
-    //compare 2 result which is done
+    //compare 2 result which is time done 
     let promiserace = promiseTimeout(2000,p1);
-
     return promiserace.then((res) => {
-        console.log("promise");
-        console.log(res);
+        //console.log("promise");
+        //console.log(res);
         return true;
     }).catch(error => {
         // Deal with error
-        console.log("error");
+        //console.log("error");
+        return false;
+    });
+}
+
+async function findcheckuser(gun,userdata){
+    //let lusers = gun.get('users');
+    //console.log(userdatas);
+    //console.log(lusers.map().once())
+    let p1 = new Promise((resolve, reject) => {
+        //gun.get('user/'+userdata.username).not(function(key){
+            //console.log("KEY>>>>");
+            //console.log('key:'+key)
+        //});
+        gun.get('user/'+userdata.username).val(function(data, key){
+            //console.log("data...");
+            //console.log(data);
+            //console.log("key...");
+            //console.log(key);
+            if(data !=null){
+                resolve('true');
+            }else{
+                reject('false');
+            }
+
+        });
+    });
+    //compare 2 result which is time done 
+    let promiserace = promiseTimeout(200,p1);
+    return promiserace.then((res) => {
+        return true;
+    }).catch(error => {
         return false;
     });
 }
@@ -217,9 +195,11 @@ router.post('/register',async function(req,res){
     if(res.locals.gun != null){
         let gun = res.locals.gun;
         
-        let bfound = await checkuserexist(gun,{username:username,password:password});
-        console.log("bfound:"+bfound);
-        if(bfound == false){
+        //let bfound = await checkuserexist(gun,{username:username,password:password});
+        let buser = await findcheckuser(gun,{username:username,password:password});
+        console.log('buser>>:'+buser);
+        //console.log("bfound:"+bfound);
+        if(buser == false){
             //if not found is add to database
             console.log("add users");
             
@@ -228,40 +208,35 @@ router.post('/register',async function(req,res){
             var salt = genRandomString(16);
             var usersaltdata = sha512(username, salt);
             var idsalt = usersaltdata.passwordHash;
-
             var passwordData = sha512(password, salt);
             //console.log(passwordData);
 
-            lusers.set({
+            let userdata = {
                 salt:salt,
                 idsalt:idsalt,
                 username:username,
-                passwordhash:passwordData.passwordHash
-            });
-            
+                passwordhash:passwordData.passwordHash,
+                session:'',
+                sessionhash:'',
+            }
+
+            gun.get("user/"+username).put(userdata);
+            lusers.set(gun.get("user/"+username));
             messagedata.message = "Added!";
         }else{
             messagedata.message = "Exist!";
-
         }
 
         //lusers.map().once(function(data, key){
             //console.log("Item:", data);
         //});
-
-
         //console.log("gun found!");
         //sha256('abc').then(hash => console.log(hash));
-
         //var salt = genRandomString(16); /** Gives us salt of length 16 */
         //var passwordData = sha512(password, salt);
         //console.log('UserPassword = '+password);
         //console.log('Passwordhash = '+passwordData.passwordHash);
         //console.log('nSalt = '+passwordData.salt);
-
-
-
-
         //messagedata.id = "0000";
     }
 
