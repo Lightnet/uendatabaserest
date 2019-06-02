@@ -22,6 +22,8 @@
         });
         let content = await rawResponse.json();
         console.log(content);
+
+        dispatch('message', content);
     }
 
     async function getRegisterAsync(data) {
@@ -35,10 +37,21 @@
         });
         let content = await rawResponse.json();
         console.log(content);
+        if(content !=null){
+            if(content.message == "exist"){
+                dispatch('message', {msg:"userexist"});
+            }
+
+            if(content.message == "created"){
+                dispatch('message', {msg:"usercreated"});
+            }
+        }
+
+        //dispatch('message', {text: 'login'});
     }
 
     function action_login(){
-        dispatch('message', {text: 'login'});
+        //dispatch('message', {text: 'login'});
         if (input_username === "" || input_password === ""){
             console.log("none string");
             return;

@@ -3,29 +3,30 @@
 //https://svelte.dev/examples#reactive-statements
 
 	import { onMount, setContext } from 'svelte'
+
+	import Modal from './component/modal.svelte';
+
 	import Home from './component/home.svelte'
 	import News from './component/news.svelte'
 	import Account from './component/account.svelte'
 	import Login from './component/login.svelte'
-
 	import Character from './component/character.svelte'
 	import Creatures from './component/creatures.svelte'
-
 	import Inventory from './component/inventory.svelte'
 	import Equips from './component/equips.svelte'
 	import Skills from './component/skills.svelte'
-
 	import Map from './component/map.svelte'
-	
 	import Shop from './component/shop.svelte'
-
 	import Server from './component/server.svelte'
 	import Admin from './component/admin.svelte'
 
 	export let name;
 
+	let showModal = false;
 	let blogin = false;
 	let view = "account";
+	let msgmodal = "None";
+	let sessionhash = "";
 
 
 	let count = 0;
@@ -37,6 +38,7 @@
 
 	function logouthandle(){
 		blogin = false;
+		sessionhash = '';
 	}
 
 	function handleClick() {
@@ -49,10 +51,40 @@
 		//photos = await res.json();
 	});
 
-	function handle_logincheck(event){
-		console.log(event.detail.text);
-		if(event.detail.text == 'login'){
-			//blogin = true;
+	function showmodal(msg){
+		showModal = true;
+		msgmodal = msg;
+	}
+
+	function handle_msg(event){
+		if(event.detail.msg){
+			console.log("event.detail.message:"+event.detail.msg);
+
+			//register
+			if(event.detail.msg == 'userexist'){
+				showmodal('User Exist!');
+			}
+			if(event.detail.msg == 'usercreated'){
+				showmodal('User Created!');
+			}
+		}
+
+		//login
+		if(event.detail.message){
+			if(event.detail.message == 'passwordpass'){
+				showmodal('Login Pass!');
+				blogin = true;
+				sessionhash = event.detail.sessionhash;
+				console.log(sessionhash);
+			}
+
+			if(event.detail.message == 'passwordfail'){
+				showmodal('Login Fail!');
+			}
+
+			if(event.detail.message == 'donotexist'){
+				showmodal("User Doesn't Exist!");
+			}
 		}
 	}
 </script>
@@ -65,7 +97,7 @@
 	*/
 </style>
 
-<div>App {name}!</div>
+<div>App {name}</div>
 <div>
 	<a href="/#" on:click={()=>{handleview('home')}}>Home</a>
 	<a href="/#" on:click={()=>{handleview('news')}}>News</a>
@@ -119,12 +151,23 @@
 	{/if}
 
 {:else}
-	<Login on:message={handle_logincheck}/>
+	<Login on:message={handle_msg}/>
 {/if}
+<!--
+Test
+<button on:click="{() => showModal = true}">
+	show modal
+</button>
+-->
 
-
-
-
+{#if showModal}
+	<Modal on:close="{() => showModal = false}">
+		<h2 slot="header">
+			Message
+		</h2>
+		<p>{msgmodal}</p>
+	</Modal>
+{/if}
 
 <!--
 <button on:click={handleClick}>

@@ -58,10 +58,41 @@ router.get('/',function(req,res){
     res.json({'message' : 'ue4 Successfull'});
 });
 
-router.post('/login',function(req,res){
+
+async function restlogin(gun,username,password){
+    return new Promise((resolve, reject) => {
+        gun.get('user/'+username).once(function(data, key){
+            if(data !=null){
+                //console.log(data.salt);
+                //console.log(data);
+                let passwordData = sha512(password, data.salt);
+                if(data.passwordhash == passwordData.passwordHash){
+                    //console.log("match password");
+                    let salt = genRandomString(16);
+                    let saltdata = sha512(username, salt);
+                    gun.get('user/'+username).put({sessionhash:saltdata.passwordHash});
+                    resolve({message:"passwordpass",sessionhash:saltdata.passwordHash});
+                }else{
+                    console.log("fail password");
+                    resolve({message: "passwordfail"});
+                }
+            }else{
+                console.log("Data Fail!");
+                resolve({message:"donotexist"});
+            }
+        });
+    });
+}
+
+
+router.post('/login',async function(req,res){
     console.log("checking ue4 login...");
     let username = "";
     let password = "";
+
+    let msgdata = {
+        message : "error"
+    }
     console.log(req.params) // unknown
     console.log(req.query) // ue4 varest
     console.log(req.body) // axios
@@ -82,28 +113,18 @@ router.post('/login',function(req,res){
         //sha256('abc').then(hash => console.log(hash));
         let gun = res.locals.gun;
 
-        gun.get('user/'+username).val(function(data, key){
-            if(data !=null){
-                console.log(data.salt);
-                let passwordData = sha512(password, data.salt);
-
-                if(data.passwordhash == passwordData.passwordHash){
-                    console.log("match password");
-
-                }else{
-                    console.log("fail password");
-                }
-            }else{
-                console.log("Data Fail!");
-            }
-        });
+        let userdata = await restlogin(gun,username,password);
+        console.log('userdata:');
+        console.log(userdata);
+        msgdata = userdata;
+        //msgdata.sessionhash = userdata.sessionhash;
     }
 
     //console.log(res.locals.gun);
-    console.log("username:"+ username);
+    //console.log("username:"+ username);
     //console.log(req.params)
     //console.log(req.query.username)
-    res.json({'message' : 'ue4 Successfull'});
+    res.json(msgdata);
 });
 
 async function checkuserexist(gun,userdata){
@@ -145,7 +166,7 @@ async function findcheckuser(gun,userdata){
             //console.log("KEY>>>>");
             //console.log('key:'+key)
         //});
-        gun.get('user/'+userdata.username).val(function(data, key){
+        gun.get('user/'+userdata.username).once(function(data, key){
             //console.log("data...");
             //console.log(data);
             //console.log("key...");
@@ -166,7 +187,6 @@ async function findcheckuser(gun,userdata){
         return false;
     });
 }
-
 
 router.post('/register',async function(req,res){
     console.log("checking ue4 register...");
@@ -222,9 +242,9 @@ router.post('/register',async function(req,res){
 
             gun.get("user/"+username).put(userdata);
             lusers.set(gun.get("user/"+username));
-            messagedata.message = "Added!";
+            messagedata.message = "created";
         }else{
-            messagedata.message = "Exist!";
+            messagedata.message = "exist";
         }
 
         //lusers.map().once(function(data, key){
