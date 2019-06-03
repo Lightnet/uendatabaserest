@@ -1,12 +1,12 @@
 <script>
 //https://svelte.dev/docs#setContext
     import { createEventDispatcher } from 'svelte';
+    import { UserName, SessionHash } from '../../stores.js';
 
     const dispatch = createEventDispatcher();
 
     let input_username = "ts";
     let input_password = "ts";
-
 
     async function getLoginAsync(data) {
         //let response = await fetch(`http://localhost:8080/ue4/login?username=${input_username}`);
@@ -22,7 +22,12 @@
         });
         let content = await rawResponse.json();
         console.log(content);
-
+        console.log(data);
+        if(content.message == 'passwordpass'){
+            UserName.set(data.username);
+            SessionHash.set(content.sessionhash);
+            //input_password = ""; //clear password
+        }
         dispatch('message', content);
     }
 
@@ -46,7 +51,6 @@
                 dispatch('message', {msg:"usercreated"});
             }
         }
-
         //dispatch('message', {text: 'login'});
     }
 
@@ -61,7 +65,6 @@
             username:input_username,
             password:input_password
         });
-
     }
 
     function action_cancel(){

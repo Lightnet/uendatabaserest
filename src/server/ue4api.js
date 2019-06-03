@@ -11,8 +11,7 @@ var promiseTimeout = require('./timeout-promise').promiseTimeout;
 var express = require('express');
 var router = express.Router();
 const crypto = require('crypto');
-const util = require('util');
-
+//const util = require('util');
 
 //https://ciphertrick.com/salt-hash-passwords-using-nodejs-crypto/
 
@@ -53,11 +52,9 @@ function saltHashPassword(userpassword) {
 //saltHashPassword('MYPASSWORD');
 //saltHashPassword('MYPASSWORD');
 
-
 router.get('/',function(req,res){
     res.json({'message' : 'ue4 Successfull'});
 });
-
 
 async function restlogin(gun,username,password){
     return new Promise((resolve, reject) => {

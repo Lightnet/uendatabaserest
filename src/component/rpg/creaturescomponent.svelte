@@ -2,12 +2,11 @@
 //https://svelte.dev/docs#setContext
     let username = "Guest";
     let charactername = "Guest Name";
-
     let accesslevel = "member";
 </script>
 <style>
-</style>
 
+</style>
+[ Creatures ]
 <p> Hello {username}!</p>
-<p> Character Name: {charactername}</p>
-<p> Rank: {accesslevel}</p>
+

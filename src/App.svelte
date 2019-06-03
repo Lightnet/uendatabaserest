@@ -4,21 +4,20 @@
 
 	import { onMount, setContext } from 'svelte'
 
-	import Modal from './component/modal.svelte';
+	import Modal from './component/basic/modalcomponent.svelte';
 
-	import Home from './component/home.svelte'
-	import News from './component/news.svelte'
-	import Account from './component/account.svelte'
-	import Login from './component/login.svelte'
-	import Character from './component/character.svelte'
-	import Creatures from './component/creatures.svelte'
-	import Inventory from './component/inventory.svelte'
-	import Equips from './component/equips.svelte'
-	import Skills from './component/skills.svelte'
-	import Map from './component/map.svelte'
-	import Shop from './component/shop.svelte'
-	import Server from './component/server.svelte'
-	import Admin from './component/admin.svelte'
+	import Home from './component/basic/homecomponent.svelte'
+	import News from './component/basic/newscomponent.svelte'
+	import Account from './component/account/accountcomponent.svelte'
+	import Login from './component/account/logincomponent.svelte'
+	import Character from './component/rpg/charactercomponent.svelte'
+	import Creatures from './component/rpg/creaturescomponent.svelte'
+	import Map from './component/rpg/mapcomponent.svelte'
+	import Shop from './component/rpg/shopcomponent.svelte'
+	import Server from './component/admin/servercomponent.svelte'
+	import Admin from './component/admin/admincomponent.svelte'
+	
+	import { count, UserName, SessionHash } from './stores.js';
 
 	export let name;
 
@@ -26,10 +25,13 @@
 	let blogin = false;
 	let view = "account";
 	let msgmodal = "None";
-	let sessionhash = "";
+	//let sessionhash = "";
 
+	let count_value;
 
-	let count = 0;
+	const unsubscribe = count.subscribe(value => {
+		count_value = value;
+	});
 
 	function handleview(_view){
 		view = _view;
@@ -38,11 +40,8 @@
 
 	function logouthandle(){
 		blogin = false;
-		sessionhash = '';
-	}
-
-	function handleClick() {
-		count += 1;
+		SessionHash.set('');
+		UserName.set('Guest');
 	}
 
 	onMount(async () => {
@@ -59,7 +58,6 @@
 	function handle_msg(event){
 		if(event.detail.msg){
 			console.log("event.detail.message:"+event.detail.msg);
-
 			//register
 			if(event.detail.msg == 'userexist'){
 				showmodal('User Exist!');
@@ -74,8 +72,9 @@
 			if(event.detail.message == 'passwordpass'){
 				showmodal('Login Pass!');
 				blogin = true;
-				sessionhash = event.detail.sessionhash;
-				console.log(sessionhash);
+				//sessionhash = event.detail.sessionhash;
+				view = "account";
+				//console.log(sessionhash);
 			}
 
 			if(event.detail.message == 'passwordfail'){
@@ -96,8 +95,14 @@
 	}
 	*/
 </style>
+<!--
+<h1>The count is {$count}</h1>
+<button on:click={count.increment}>+</button>
+<button on:click={count.decrement}>-</button>
+<button on:click={count.reset}>reset</button>
+-->
 
-<div>App {name}</div>
+<div> {name} Rest App.</div>
 <div>
 	<a href="/#" on:click={()=>{handleview('home')}}>Home</a>
 	<a href="/#" on:click={()=>{handleview('news')}}>News</a>
@@ -106,10 +111,6 @@
 	<a href="/#" on:click={()=>{handleview('character')}}>Character</a>
 	<a href="/#" on:click={()=>{handleview('creatures')}}>Creatures</a>
 
-	<a href="/#" on:click={()=>{handleview('inventory')}}>Inventory</a>
-	<a href="/#" on:click={()=>{handleview('equips')}}>Equips</a>
-	<a href="/#" on:click={()=>{handleview('skills')}}>Skills</a>
-	
 	<a href="/#" on:click={()=>{handleview('shop')}}>Shop</a>
 	<a href="/#" on:click={()=>{handleview('map')}}>Map</a>
 
@@ -118,41 +119,50 @@
 
 	{#if blogin === true}
 		<a href="/#" on:click={logouthandle}>Logout</a>
+	{:else}
+		<a href="/#" on:click={()=>{handleview('login')}}>Login</a>
 	{/if}
+
 </div>
 
 {#if blogin === true}
 	{#if view == "account"}
-		<Account></Account>
+		<Account />
 	{:else if view == 'home'}	
-		<Home></Home>
+		<Home />
 	{:else if view == 'news'}	
-		<News></News>
+		<News />
 	{:else if view == 'character'}	
-		<Character></Character>
+		<Character />
 	{:else if view == 'creatures'}	
-		<Creatures></Creatures>
-	{:else if view == 'inventory'}	
-		<Inventory></Inventory>
-	{:else if view == 'equips'}	
-		<Equips></Equips>
-	{:else if view == 'Skills'}	
-		<Skills></Skills>
+		<Creatures />
 	{:else if view == 'map'}	
-		<Map></Map>
+		<Map />
 	{:else if view == 'shop'}	
-		<Shop></Shop>
+		<Shop />
 	{:else if view == 'server'}	
-		<Server></Server>
+		<Server />
 	{:else if view == 'admin'}	
-		<Admin></Admin>
+		<Admin />
+	{:else if view == 'login'}	
+		<Login on:message={handle_msg}/>
 	{:else}	
 		<Home />
 	{/if}
-
 {:else}
+	{#if view == 'login'}	
+		<Login on:message={handle_msg}/>
+	{:else if view == 'news'}	
+		<News />
+	{:else}	
+		<Home />
+	{/if}	
+	<!--
 	<Login on:message={handle_msg}/>
+	-->
 {/if}
+
+
 <!--
 Test
 <button on:click="{() => showModal = true}">

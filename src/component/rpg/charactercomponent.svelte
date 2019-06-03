@@ -8,5 +8,14 @@
 
 </style>
 
+<div>
+[ Character ]
+<a href="/#"> Index </a>
+<a href="/#"> Inventory </a>
+<a href="/#"> Equipements </a>
+<a href="/#"> Skills </a>
+<a href="/#"> Quests </a>
+</div>
+
 <p> Hello {username}!</p>
-Creatures
+Character
