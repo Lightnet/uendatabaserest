@@ -2,6 +2,7 @@ const path = require('path');
 //const fs = require('fs');
 var gulp = require('gulp');
 var clean = require('gulp-clean');
+var rename = require('gulp-rename');
 
 var webpack = require('webpack');
 const webpackStream = require('webpack-stream');
@@ -9,12 +10,16 @@ const nodeExternals = require('webpack-node-externals');
 //var rollup = require('gulp-better-rollup')
 var nodemon = require('gulp-nodemon');
 
+const svelte = require('rollup-plugin-svelte');
+const resolve = require('rollup-plugin-node-resolve');
+const commonjs = require('rollup-plugin-commonjs');
+const rollup = require('gulp-better-rollup');
+
 //var gls = require('gulp-live-server');
 var browserSync = require('browser-sync').create();
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 //var server = gls.new('./backend.js');
-
 //var server = gls.new('./backend.js', {env: {NODE_ENV: 'development'},livereload:false});
 
 const mode = process.env.NODE_ENV || 'development';
@@ -84,7 +89,6 @@ const commonModulejs = {
                 'css-loader'
             ]
         },
-        
     ]
 }
 
@@ -169,40 +173,32 @@ async function frontend_build(){
         //.pipe(webpackStream(frontWebpackConfig), webpack)
         .pipe(gulp.dest('./public/'));
 }
+//===============================================
+// Rollup
+//===============================================
+var rollupconfig = {
+    //input: 'src/main.js',
+    plugins: [
+        svelte({
+			//dev: !mode,
+			css: css => {
+				css.write('public/bundle.css');
+			}
+        }),
+        resolve(),
+		commonjs(),
+    ]
+}
 
-
-//var svelte = require('rollup-plugin-svelte');
-//var resolve = require('rollup-plugin-node-resolve');
-//var rp_commonjs = require('rollup-plugin-commonjs');
-
-//function frontend_build(){
-    //return gulp.src(['./src/main.js'])
-        //.pipe(rollup({
-            //output: {
-                //sourcemap: true,
-                //format: 'iife',
-                //name: 'app',
-                //file: 'public/bundle.js'
-            //},
-            //plugins: [
-                //svelte({
-                    // enable run-time checks when not in production
-                    //dev: !prod,
-                    // we'll extract any component CSS out into
-                    // a separate file — better for performance
-                    //css: css => {
-                        //css.write('public/bundle.css');
-                    //}
-                    //skipIntroByDefault: true,
-                    //nestedTransitions: true
-                //}),
-                //resolve(),
-		        //rp_commonjs(),
-            //]
-        //}))
-    //.pipe(gulp.dest('./public/'));
-//}
-
+function rollupbuild(){
+    return gulp.src('src/client/main.js')
+    .pipe(rollup(rollupconfig, 'umd'))
+    .pipe(rename('bundle.js'))
+    .pipe(gulp.dest('public/'));
+}
+//===============================================
+//
+//===============================================
 function backend_build(){
     return gulp.src('./server.js')
         //.pipe(webpackStream(backWebpackConfig))
@@ -216,7 +212,6 @@ async function cleanbundle(done){
     //await timeout(5000);
     //return done();
 }
-
 
 var started = false;
 
@@ -259,12 +254,17 @@ function reload(cb){
 			started = true; 
 		} 
 	});
+}
 
+function refreshbrowser(cb){
+    browserSync.reload();
+    return cb();
 }
 
 function watch(done) {
     gulp.watch(['./server.js','./src/server/**/*.*'], gulp.series(backend_build));
     //gulp.watch(['./src/**/*.*'], gulp.series( cleanbundle, frontend_build));
+    gulp.watch(['./src/client/**/*.*'], gulp.series( cleanbundle, rollupbuild, refreshbrowser));
 
     //use gulp.watch to trigger server actions(notify, start or stop)
     //gulp.watch(['./public/bundle.js'], (donesub)=> {
@@ -293,15 +293,17 @@ function browser_sync(done){
 }
 
 exports.cleanbundle = cleanbundle;
+exports.rollupbuild = rollupbuild;
 exports.frontend_build = frontend_build;
 exports.backend_build = backend_build;
 exports.serve = serve;
 exports.reload = reload;
+exports.refreshbrowser = refreshbrowser;
 
 exports.watch = watch;
 exports.browser_sync = browser_sync;
 
-const build = gulp.series(frontend_build, backend_build, watch, serve, browser_sync);
+const build = gulp.series(rollupbuild, backend_build, watch, serve, browser_sync);
 
 const buildserver = gulp.series( backend_build, watch, serve);
 exports.buildserver = buildserver;
@@ -309,7 +311,7 @@ exports.buildserver = buildserver;
 /*
  * Export a default task
  */
-exports.default  = build;
+exports.default = build;
 
 
 

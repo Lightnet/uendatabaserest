@@ -5,7 +5,7 @@ localStorage.clear();
 const app = new App({
 	target: document.body,
 	props: {
-		name: 'UE4'
+		name: 'Template UE4'
 	}
 });
 
